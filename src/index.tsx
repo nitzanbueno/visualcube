@@ -1,6 +1,7 @@
+import React, { FC } from 'react'
 import { makeCubeGeometry } from './cube/geometry'
 import { Axis } from './math'
-import { renderCube } from './cube/drawing'
+import { Cube } from './cube/drawing';
 import { ICubeOptions } from './cube/options'
 import { DefaultColorScheme } from './cube/constants'
 import { makeStickerColors } from './cube/stickers'
@@ -28,36 +29,12 @@ const defaultOptions: ICubeOptions = {
   },
 }
 
-export function cubeSVG(container: HTMLElement | string, extraOptions: any = {}) {
-  let options = getOptions(defaultOptions, extraOptions)
-  let geomety = makeCubeGeometry(options)
+export const CubeSvg: FC<{extraOptions?: any}> = (props) => {
+  let options = getOptions(defaultOptions, props.extraOptions || {})
+  let geometry = makeCubeGeometry(options)
   options.stickerColors = makeStickerColors(options)
 
-  renderCube(container, geomety, options)
-}
-
-export function cubePNG(container: HTMLElement, extraOptions: any = {}) {
-  let element = document.createElement('div')
-  let options = getOptions(defaultOptions, extraOptions)
-  cubeSVG(element, options)
-
-  setTimeout(() => {
-    let svgElement = element.querySelector('svg')
-    let targetImage = document.createElement('img') // Where to draw the result
-    container.appendChild(targetImage)
-    let can = document.createElement('canvas') // Not shown on page
-    let ctx = can.getContext('2d')
-    let loader = new Image() // Not shown on page
-
-    loader.width = can.width = targetImage.width = options.width || 128
-    loader.height = can.height = targetImage.height = options.height || 128
-    loader.onload = function() {
-      ctx.drawImage(loader, 0, 0, loader.width, loader.height)
-      targetImage.src = can.toDataURL()
-    }
-    var svgAsXML = new XMLSerializer().serializeToString(svgElement)
-    loader.src = 'data:image/svg+xml,' + encodeURIComponent(svgAsXML)
-  })
+  return <Cube geometry={geometry} options={options} />
 }
 
 function getOptions(defaultOptions: ICubeOptions, extraOptions: string | ICubeOptions): ICubeOptions {

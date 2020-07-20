@@ -1,5 +1,6 @@
-import { ColorName, FaceletToFace, FaceletDefinition, FaceletToColor, ColorCode } from './../constants'
-import * as SVG from 'svg.js'
+import React, { ComponentType, FC } from 'react'
+import { Svg, Polygon, G, Path, Rect } from 'react-native-svg'
+import { ColorName, FaceletToFace, FaceletToColor, ColorCode } from '../constants'
 import { CubeGeometry, FaceStickers, FaceRotations, rotateFaces } from './geometry'
 import { Vec3, transScale, scale, translate, radians2Degrees } from '../math'
 import { Face, AllFaces } from './constants'
@@ -21,50 +22,12 @@ const defaultFaceRotations: FaceRotations = {
   [Face.B]: [0, 0, 1],
 }
 
-export function renderCube(container: HTMLElement | string, geometry: CubeGeometry, options: ICubeOptions) {
-  let faceRotations = rotateFaces(defaultFaceRotations, options.viewportRotations)
-  let renderOrder = getRenderOrder(faceRotations)
-  let svg = SVG(container as HTMLElement).size(options.width, options.height)
-  svg.viewbox(options.viewbox.x, options.viewbox.y, options.viewbox.width, options.viewbox.height)
+function viewBox(x: number, y: number, width: number, height: number) {
+  return `${x} ${y} ${width} ${height}`
+}
 
-  let hiddenFaces = renderOrder.filter(face => !faceVisible(face, faceRotations))
-  let visibleFaces = renderOrder.filter(face => faceVisible(face, faceRotations))
-
-  renderBackground(svg, options)
-  // Render hidden faces if cube color has transparency
-  if (options.cubeOpacity < 100) {
-    let cubeOutlineGroup = getCubeOutlineGroup(svg, options)
-    hiddenFaces.forEach(face => {
-      renderFaceStickers(svg, face, geometry[face], options)
-      renderCubeOutline(cubeOutlineGroup, geometry[face], options)
-    })
-  }
-
-  let cubeOutlineGroup = getCubeOutlineGroup(svg, options)
-  visibleFaces.forEach(face => {
-    renderCubeOutline(cubeOutlineGroup, geometry[face], options)
-    renderFaceStickers(svg, face, geometry[face], options)
-  })
-
-  if (options.view === 'plan') {
-    let ollGroup = getOllLayerGroup(svg, options)
-    ;[Face.R, Face.F, Face.L, Face.B].forEach(face => {
-      renderOLLStickers(ollGroup, face, geometry[face], faceRotations, options)
-    })
-  }
-
-  let arrowGroup = getArrowGroup(svg, geometry[0].length - 1)
-  let arrowDefinitions: Arrow[] = []
-
-  if (Array.isArray(options.arrows)) {
-    arrowDefinitions = options.arrows
-  } else if (typeof options.arrows === 'string') {
-    arrowDefinitions = parseArrows(options.arrows)
-  }
-
-  arrowDefinitions.forEach(arrow => {
-    renderArrow(arrowGroup, geometry, arrow)
-  })
+function polygonPoints(points: number[][]) {
+  return points.map(point => point.join(',')).join(' ')
 }
 
 /**
@@ -78,57 +41,45 @@ function getRenderOrder(faceRotations: FaceRotations): Face[] {
   return renderOrder
 }
 
-function renderBackground(svg: SVG.Doc, options: ICubeOptions) {
-  let backgroundSvg = svg.rect(options.viewbox.width, options.viewbox.height)
-  backgroundSvg.x(options.viewbox.x)
-  backgroundSvg.y(options.viewbox.y)
+const Background: FC<{ options: ICubeOptions }> = ({ options }) => {
+  let fill: string
+  let fillOpacity: number | undefined = undefined
+
   if (!options.backgroundColor) {
-    backgroundSvg.fill('none')
-    backgroundSvg.opacity(0)
+    fill = 'none'
+    fillOpacity = 0
   } else {
-    backgroundSvg.fill({
-      color: options.backgroundColor,
-    })
+    fill = options.backgroundColor
   }
+
+  return <Rect {...options.viewbox} fill={fill} fillOpacity={fillOpacity} />
 }
 
 function faceVisible(face: Face, rotations: FaceRotations) {
   return rotations[face][2] < -0.105
 }
 
-function getCubeOutlineGroup(svg: SVG.Doc, options: ICubeOptions): SVG.G {
-  let cubeOutlineGroup = svg.group()
-  cubeOutlineGroup.opacity(options.cubeOpacity / 100)
-  cubeOutlineGroup.attr({
-    'stroke-width': '0.1',
-    'stroke-linejoin': 'round',
-  })
-  return cubeOutlineGroup
+const CubeOutlineGroup: FC<{ options: ICubeOptions }> = ({ options, children }) => {
+  return <G opacity={options.cubeOpacity / 100} strokeWidth={0.1} strokeLinejoin="round" children={children} />
 }
 
-function getOllLayerGroup(svg: SVG.Doc, options: ICubeOptions): SVG.G {
-  let group = svg.group()
-  group.opacity(options.stickerOpacity / 100)
-  group.attr({
-    'stroke-opacity': '1',
-    'stroke-width': 0.02,
-    'stroke-linejoin': 'round',
-  })
-  return group
+const OllLayerGroup: FC<{ options: ICubeOptions }> = ({ options, children }) => {
+  return (
+    <G
+      opacity={options.stickerOpacity / 100}
+      strokeOpacity={1}
+      strokeWidth={0.02}
+      strokeLinejoin="round"
+      children={children}
+    />
+  )
 }
 
-function getArrowGroup(svg: SVG.Doc, cubeSize: number): SVG.G {
-  let arrowGroup = svg.group()
-  arrowGroup.attr({
-    opacity: 1,
-    'stroke-opacity': 1,
-    'stroke-width': 0.12 / cubeSize,
-    'stroke-linecap': 'round',
-  })
-  return arrowGroup
+const ArrowGroup: FC<{ cubeSize: number }> = ({ cubeSize, children }) => {
+  return <G opacity={1} strokeOpacity={1} strokeWidth={0.12 / cubeSize} strokeLinecap="round" children={children} />
 }
 
-function renderCubeOutline(svg: SVG.G, face: FaceStickers, options: ICubeOptions): SVG.Polygon {
+const CubeOutline: FC<{ face: FaceStickers; options: ICubeOptions }> = ({ face, options }) => {
   const cubeSize = face.length - 1
   const width = options.outlineWidth
   let outlinePoints = [
@@ -137,21 +88,18 @@ function renderCubeOutline(svg: SVG.G, face: FaceStickers, options: ICubeOptions
     [face[cubeSize][cubeSize][0] * width, face[cubeSize][cubeSize][1] * width],
     [face[0][cubeSize][0] * width, face[0][cubeSize][1] * width],
   ]
-  let polygon = svg.polygon(outlinePoints)
-  polygon.fill(options.cubeColor)
-  polygon.stroke(options.cubeColor)
-  return polygon
+
+  return <Polygon fill={options.cubeColor} stroke={options.cubeColor} points={polygonPoints(outlinePoints)} />
 }
 
-function renderFaceStickers(svg: SVG.Doc, face: Face, stickers: FaceStickers, options: ICubeOptions): SVG.G {
+export const FaceStickersSvg: FC<{ face: Face; stickers: FaceStickers; options: ICubeOptions }> = ({
+  face,
+  stickers,
+  options,
+}) => {
   const cubeSize = stickers.length - 1
-  let group = svg.group()
-  group.opacity(options.stickerOpacity / 100)
-  group.attr({
-    'stoke-opacity': '0.5',
-    'stroke-width': options.strokeWidth,
-    'stroke-linejoin': 'round',
-  })
+
+  const stickerElements: JSX.Element[] = []
 
   for (let i = 0; i < cubeSize; i++) {
     for (let j = 0; j < cubeSize; j++) {
@@ -169,28 +117,36 @@ function renderFaceStickers(svg: SVG.Doc, face: Face, stickers: FaceStickers, op
 
       let color = getStickerColor(face, i, j, options)
       if (color !== ColorName.Transparent) {
-        renderSticker(group, p1, p2, p3, p4, color, options.cubeColor)
+        stickerElements.push(
+          <Sticker key={`${i},${j}`} {...{ p1, p2, p3, p4 }} stickerColor={color} cubeColor={options.cubeColor} />
+        )
       }
     }
   }
 
-  return group
+  return (
+    <G
+      opacity={options.stickerOpacity / 100}
+      strokeOpacity={0.5}
+      strokeWidth={options.strokeWidth}
+      strokeLinejoin="round"
+      children={stickerElements}
+    />
+  )
 }
 
-function renderSticker(
-  g: SVG.G,
-  p1: Vec3,
-  p2: Vec3,
-  p3: Vec3,
-  p4: Vec3,
-  stickerColor: string,
+const Sticker: ComponentType<{
+  p1: Vec3
+  p2: Vec3
+  p3: Vec3
+  p4: Vec3
+  stickerColor: string
   cubeColor: string
-): SVG.Polygon {
+}> = props => {
+  const { p1, p2, p3, p4, stickerColor, cubeColor } = props
   let stickerPoints = [[p1[0], p1[1]], [p2[0], p2[1]], [p3[0], p3[1]], [p4[0], p4[1]]]
-  let polygon = g.polygon(stickerPoints)
-  polygon.fill(stickerColor)
-  polygon.stroke(cubeColor)
-  return polygon
+
+  return <Polygon fill={stickerColor} stroke={cubeColor} points={polygonPoints(stickerPoints)} />
 }
 
 /**
@@ -240,13 +196,16 @@ function getStickerColor(face: Face, row: number, col: number, options: ICubeOpt
 }
 
 // Renders the top rim of the R U L and B faces out from side of cube
-export function renderOLLStickers(
-  group: SVG.G,
-  face: Face,
-  stickers: FaceStickers,
-  rotations: FaceRotations,
+export const OLLStickers: FC<{
+  face: Face
+  stickers: FaceStickers
+  rotations: FaceRotations
   options: ICubeOptions
-) {
+}> = props => {
+  const { face, stickers, rotations, options } = props
+
+  const stickerElements = []
+
   // Translation vector, to move faces out
   let v1 = scale(rotations[face], 0)
   let v2 = scale(rotations[face], 0.2)
@@ -265,15 +224,17 @@ export function renderOLLStickers(
     let stickerColor = getStickerColor(face, 0, i, options)
 
     if (stickerColor !== ColorName.Transparent) {
-      renderSticker(group, p1, p2, p3, p4, stickerColor, options.cubeColor)
+      stickerElements.push(<Sticker key={i} {...{ p1, p2, p3, p4, stickerColor }} cubeColor={options.cubeColor} />)
     }
   }
+
+  return <>{stickerElements}</>
 }
 
 /**
  * Generates svg for an arrow pointing from sticker s1 to s2
  */
-export function renderArrow(group: SVG.G, geometry: CubeGeometry, arrow: Arrow) {
+export const ArrowSvg: FC<{ geometry: CubeGeometry; arrow: Arrow }> = ({ geometry, arrow }) => {
   let cubeSize = geometry[0].length - 1
 
   // Find center point for each facelet
@@ -321,24 +282,94 @@ export function renderArrow(group: SVG.G, geometry: CubeGeometry, arrow: Arrow) 
   }
 
   // Draw line
-  let lineSvg = group.path(`M ${p1[0]},${p1[1]} ${p3 ? 'Q ' + p3[0] + ',' + p3[1] : 'L'} ${p2[0]},${p2[1]}`)
-  lineSvg.fill('none')
-  lineSvg.stroke({
-    color: arrow.color,
-    opacity: 1,
-  })
+  let lineSvg = (
+    <Path
+      d={`M ${p1[0]},${p1[1]} ${p3 ? 'Q ' + p3[0] + ',' + p3[1] : 'L'} ${p2[0]},${p2[1]}`}
+      fill="none"
+      stroke={arrow.color}
+      strokeOpacity={1}
+    />
+  )
 
   // Draw arrow head
-  let headSvg = group.path('M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z')
-  headSvg.attr({
-    transform: `translate(${p2[0]},${p2[1]}) scale(${0.033 / cubeSize}) rotate(${rotation})`,
-  })
+  let headSvg = (
+    <Path
+      d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z"
+      translate={[p2[0], p2[1]]}
+      scale={0.033 / cubeSize}
+      rotation={rotation}
+      fill={arrow.color}
+      strokeWidth={0}
+      strokeLinejoin="round"
+    />
+  )
 
-  headSvg.style({
-    fill: arrow.color,
-  })
-  headSvg.attr({
-    'stroke-width': 0,
-    'stroke-linejoin': 'round',
-  })
+  return (
+    <>
+      {lineSvg}
+      {headSvg}
+    </>
+  )
+}
+
+export const Cube: FC<{ geometry: CubeGeometry; options: ICubeOptions }> = ({ geometry, options }) => {
+  let faceRotations = rotateFaces(defaultFaceRotations, options.viewportRotations)
+  let renderOrder = getRenderOrder(faceRotations)
+
+  let hiddenFaces = renderOrder.filter(face => !faceVisible(face, faceRotations))
+  let visibleFaces = renderOrder.filter(face => faceVisible(face, faceRotations))
+
+  let arrowDefinitions: Arrow[] = []
+
+  if (Array.isArray(options.arrows)) {
+    arrowDefinitions = options.arrows
+  } else if (typeof options.arrows === 'string') {
+    arrowDefinitions = parseArrows(options.arrows)
+  }
+
+  return (
+    <Svg
+      width={options.width}
+      height={options.height}
+      viewBox={viewBox(options.viewbox.x, options.viewbox.y, options.viewbox.width, options.viewbox.height)}
+    >
+      <Background options={options} />
+      {options.cubeOpacity < 100 && (
+        <>
+          <CubeOutlineGroup options={options}>
+            {hiddenFaces.map(face => (
+              <CubeOutline face={geometry[face]} options={options} />
+            ))}
+          </CubeOutlineGroup>
+          {hiddenFaces.map(face => (
+            <FaceStickersSvg face={face} stickers={geometry[face]} options={options} />
+          ))}
+        </>
+      )}
+
+      <CubeOutlineGroup options={options}>
+        {visibleFaces.map(face => (
+          <CubeOutline face={geometry[face]} options={options} />
+        ))}
+      </CubeOutlineGroup>
+
+      {visibleFaces.map(face => (
+        <FaceStickersSvg face={face} stickers={geometry[face]} options={options} />
+      ))}
+
+      {options.view === 'plan' && (
+        <OllLayerGroup options={options}>
+          {[Face.R, Face.F, Face.L, Face.B].map(face => (
+            <OLLStickers face={face} stickers={geometry[face]} rotations={faceRotations} options={options} />
+          ))}
+        </OllLayerGroup>
+      )}
+
+      <ArrowGroup cubeSize={geometry[0].length - 1}>
+        {arrowDefinitions.map(arrow => (
+          <ArrowSvg geometry={geometry} arrow={arrow} />
+        ))}
+      </ArrowGroup>
+    </Svg>
+  )
 }

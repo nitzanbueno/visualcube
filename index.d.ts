@@ -1,3 +1,5 @@
+import { ComponentType } from "react";
+
 declare namespace SRVisualizer {
   export type Vec3 = [number, number, number];
 
@@ -84,8 +86,7 @@ declare namespace SRVisualizer {
     }
   }
 
-  export function cubeSVG(container: HTMLElement | string, options: CubeOptions): void
-  export function cubePNG(container: HTMLElement, options: CubeOptions): void
+  export const CubeSvg: ComponentType<{extraOptions?: string | CubeOptions}>
 }
 
 export = SRVisualizer
