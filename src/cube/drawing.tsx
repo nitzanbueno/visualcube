@@ -337,37 +337,37 @@ export const Cube: FC<{ geometry: CubeGeometry; options: ICubeOptions }> = ({ ge
       {options.cubeOpacity < 100 && (
         <>
           <CubeOutlineGroup options={options}>
-            {hiddenFaces.map(face => (
-              <CubeOutline face={geometry[face]} options={options} />
+            {hiddenFaces.map((face, index) => (
+              <CubeOutline key={index} face={geometry[face]} options={options} />
             ))}
           </CubeOutlineGroup>
-          {hiddenFaces.map(face => (
-            <FaceStickersSvg face={face} stickers={geometry[face]} options={options} />
+          {hiddenFaces.map((face, index) => (
+            <FaceStickersSvg key={index} face={face} stickers={geometry[face]} options={options} />
           ))}
         </>
       )}
 
       <CubeOutlineGroup options={options}>
-        {visibleFaces.map(face => (
-          <CubeOutline face={geometry[face]} options={options} />
+        {visibleFaces.map((face, index) => (
+          <CubeOutline key={index} face={geometry[face]} options={options} />
         ))}
       </CubeOutlineGroup>
 
-      {visibleFaces.map(face => (
-        <FaceStickersSvg face={face} stickers={geometry[face]} options={options} />
+      {visibleFaces.map((face, index) => (
+        <FaceStickersSvg key={index} face={face} stickers={geometry[face]} options={options} />
       ))}
 
       {options.view === 'plan' && (
         <OllLayerGroup options={options}>
-          {[Face.R, Face.F, Face.L, Face.B].map(face => (
-            <OLLStickers face={face} stickers={geometry[face]} rotations={faceRotations} options={options} />
+          {[Face.R, Face.F, Face.L, Face.B].map((face, index) => (
+            <OLLStickers key={index} face={face} stickers={geometry[face]} rotations={faceRotations} options={options} />
           ))}
         </OllLayerGroup>
       )}
 
       <ArrowGroup cubeSize={geometry[0].length - 1}>
-        {arrowDefinitions.map(arrow => (
-          <ArrowSvg geometry={geometry} arrow={arrow} />
+        {arrowDefinitions.map((arrow, index) => (
+          <ArrowSvg key={index} geometry={geometry} arrow={arrow} />
         ))}
       </ArrowGroup>
     </Svg>
