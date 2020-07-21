@@ -2,10 +2,10 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "noImplicitAny": false,
-    "module": "commonjs",
-    "target": "es5",
+    "module": "es2015",
     "allowJs": true,
     "jsx": "react-native",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "declaration": false
   }
 }
