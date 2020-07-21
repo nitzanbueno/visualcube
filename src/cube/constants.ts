@@ -1,6 +1,6 @@
 import { ColorCode } from './../constants'
 import { ICubeColorScheme } from './models/color-scheme'
-import { Axis } from '../..'
+import { Axis } from '..'
 
 export enum Face {
   U = 0,

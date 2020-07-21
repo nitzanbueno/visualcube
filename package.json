@@ -2,8 +2,8 @@
   "name": "sr-visualizer",
   "version": "1.0.8",
   "description": "",
-  "source": "src/index.tsx",
-  "main": "dist/main.js",
+  "source": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "build": "microbundle --format cjs --jsx React.createElement",
     "dev": "microbundle watch --format cjs --jsx React.createElement",

@@ -1,4 +1,4 @@
-import { Face } from '..'
+import { Face } from '.'
 
 export enum ColorCode {
   Black = '#000000',

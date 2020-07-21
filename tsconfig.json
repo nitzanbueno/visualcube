@@ -5,7 +5,7 @@
     "module": "es2015",
     "allowJs": true,
     "jsx": "react-native",
-    "esModuleInterop": true,
-    "declaration": false
+    "esModuleInterop": true
+    // "declaration": false
   }
 }

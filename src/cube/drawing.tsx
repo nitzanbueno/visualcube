@@ -1,4 +1,4 @@
-import React, { ComponentType, FC } from 'react'
+import React, { Fragment, ComponentType, FC } from 'react'
 import { Svg, Polygon, G, Path, Rect } from 'react-native-svg'
 import { ColorName, FaceletToFace, FaceletToColor, ColorCode } from '../constants'
 import { CubeGeometry, FaceStickers, FaceRotations, rotateFaces } from './geometry'
@@ -228,7 +228,7 @@ export const OLLStickers: FC<{
     }
   }
 
-  return <>{stickerElements}</>
+  return <Fragment>{stickerElements}</Fragment>
 }
 
 /**
@@ -305,10 +305,10 @@ export const ArrowSvg: FC<{ geometry: CubeGeometry; arrow: Arrow }> = ({ geometr
   )
 
   return (
-    <>
+    <Fragment>
       {lineSvg}
       {headSvg}
-    </>
+    </Fragment>
   )
 }
 
@@ -335,7 +335,7 @@ export const Cube: FC<{ geometry: CubeGeometry; options: ICubeOptions }> = ({ ge
     >
       <Background options={options} />
       {options.cubeOpacity < 100 && (
-        <>
+        <Fragment>
           <CubeOutlineGroup options={options}>
             {hiddenFaces.map((face, index) => (
               <CubeOutline key={index} face={geometry[face]} options={options} />
@@ -344,7 +344,7 @@ export const Cube: FC<{ geometry: CubeGeometry; options: ICubeOptions }> = ({ ge
           {hiddenFaces.map((face, index) => (
             <FaceStickersSvg key={index} face={face} stickers={geometry[face]} options={options} />
           ))}
-        </>
+        </Fragment>
       )}
 
       <CubeOutlineGroup options={options}>
