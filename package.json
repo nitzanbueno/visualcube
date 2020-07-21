@@ -5,8 +5,8 @@
   "source": "src/index.tsx",
   "main": "dist/main.js",
   "scripts": {
-    "build": "microbundle --format cjs",
-    "dev": "microbundle watch --format cjs",
+    "build": "microbundle --format cjs --jsx React.createElement",
+    "dev": "microbundle watch --format cjs --jsx React.createElement",
     "pretty": "prettier --write \"src/**/*.ts\""
   },
   "author": "",
